@@ -3,4 +3,17 @@ name = "dl-burning"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = ["burn/dataset", "burn/vision"]
+ndarray = ["burn/ndarray"]
+ndarray-blas-accelerate = ["burn/ndarray", "burn/accelerate"]
+ndarray-blas-netlib = ["burn/ndarray", "burn/blas-netlib"]
+ndarray-blas-openblas = ["burn/ndarray", "burn/openblas"]
+tch-cpu = ["burn/tch"]
+tch-gpu = ["burn/tch"]
+wgpu = ["burn/wgpu"]
+
 [dependencies]
+burn = {path = "../burn/crates/burn", features = ["train"]}
+log = { default-features = false, version = "0.4.22" }
+serde = { version = "1.0.217", default-features = false, features = ["alloc", "std", "derive"] } 
