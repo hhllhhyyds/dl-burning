@@ -1,9 +1,10 @@
 use std::io::Write;
 
 use burn::{
+    config::Config,
     data::dataloader::DataLoaderBuilder,
+    module::Module,
     optim::SgdConfig,
-    prelude::*,
     record::{CompactRecorder, FullPrecisionSettings, PrettyJsonFileRecorder},
     tensor::backend::AutodiffBackend,
     train::{
@@ -47,6 +48,7 @@ fn create_artifact_dir(artifact_dir: &str) {
 
 pub fn run<B: AutodiffBackend>(device: B::Device) {
     create_artifact_dir(ARTIFACT_DIR);
+
     // Config
     let config_optimizer = SgdConfig::new();
     let config = LinearRegressionTrainingConfig::new(config_optimizer);
@@ -94,22 +96,14 @@ pub fn run<B: AutodiffBackend>(device: B::Device) {
 
     config
         .save(format!("{ARTIFACT_DIR}/config.json").as_str())
-        .unwrap();
+        .expect("Failed to save config");
 
-    let mut file = std::fs::File::create(format!("{ARTIFACT_DIR}/model.txt")).unwrap();
+    let mut file = std::fs::File::create(format!("{ARTIFACT_DIR}/model_save.log")).unwrap();
     write!(
         file,
-        "{}",
-        &format!("weights:\n {}", model_trained.net.weight.val().to_string())
-    )
-    .unwrap();
-    write!(
-        file,
-        "{}",
-        &format!(
-            "bias:\n {}",
-            model_trained.net.bias.as_ref().unwrap().val().to_string()
-        )
+        "weights:\n{}\nbias:\n{}\n",
+        model_trained.net.weight.val().to_string(),
+        model_trained.net.bias.as_ref().unwrap().val().to_string()
     )
     .unwrap();
 

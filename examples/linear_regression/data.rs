@@ -1,21 +1,23 @@
 use burn::{
     data::{dataloader::batcher::Batcher, dataset::Dataset},
-    prelude::Backend,
+    tensor::backend::Backend,
     tensor::{Tensor, TensorData},
 };
 use rand::Rng;
 
-pub const FEATURES_COUNT: usize = 5;
-pub const WEIGHTS: [f32; FEATURES_COUNT] = [2.0, -3.4, 4.3, -5.5, 6.8];
-pub const BIAS: f32 = -1.2;
+const WEIGHTS: [f32; 5] = [2.0, -3.4, 4.3, -5.5, 6.8];
+pub const fn feature_count() -> usize {
+    WEIGHTS.len()
+}
+const BIAS: f32 = -1.2;
 
-pub const NOISE: f32 = 0.00;
-pub const NUM_TRAIN: usize = 20000;
-pub const NUM_VALIDATION: usize = 20000;
+const NOISE: f32 = 0.01;
+const NUM_TRAIN: usize = 20000;
+const NUM_VALIDATION: usize = 20000;
 
 #[derive(Clone, Debug)]
 pub struct SyntheticRegressionItem {
-    pub x: [f32; FEATURES_COUNT],
+    pub x: [f32; feature_count()],
     pub y: f32,
 }
 
@@ -27,19 +29,24 @@ pub struct SyntheticRegressionDataSet {
 impl SyntheticRegressionDataSet {
     pub fn gen(count: usize) -> Self {
         let mut rng = rand::rng();
-        let mut data = vec![];
-        (0..count).for_each(|_| {
-            let mut x = [0.0; FEATURES_COUNT];
-            (0..FEATURES_COUNT).for_each(|i| x[i] = rng.random_range(0f32..1.0));
-            let y = x
-                .iter()
-                .zip(WEIGHTS.iter())
-                .map(|(x, w)| w * x)
-                .sum::<f32>()
-                + BIAS
-                + rng.random_range(0f32..1.0) * NOISE;
-            data.push(SyntheticRegressionItem { x, y });
-        });
+
+        let data = (0..count)
+            .map(|_| {
+                let mut x = [0.0; feature_count()];
+                x.iter_mut()
+                    .for_each(|xi| *xi = rng.random_range(0f32..1.0));
+
+                let y = x
+                    .iter()
+                    .zip(WEIGHTS.iter())
+                    .map(|(x, w)| w * x)
+                    .sum::<f32>()
+                    + BIAS
+                    + rng.random_range(0f32..1.0) * NOISE;
+                SyntheticRegressionItem { x, y }
+            })
+            .collect();
+
         Self { data }
     }
 
@@ -87,7 +94,7 @@ impl<B: Backend> Batcher<SyntheticRegressionItem, SyntheticRegressionBatch<B>>
             .iter()
             .map(|item| TensorData::from(item.x))
             .map(|data| Tensor::<B, 1>::from_data(data.convert::<B::FloatElem>(), &self.device))
-            .map(|tensor| tensor.reshape([1, FEATURES_COUNT]))
+            .map(|tensor| tensor.reshape([1, feature_count()]))
             .collect();
 
         let y_arr = items
