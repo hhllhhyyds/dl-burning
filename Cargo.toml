@@ -7,4 +7,5 @@ edition = "2021"
 default = []
 
 [dependencies]
-burn = {version= "0.16.0", features = ["train", "dataset", "vision", "candle-cuda"]}
+burn = {version= "0.16.0", path = "../burn/crates/burn", features = ["train", "dataset", "vision", "candle-cuda"]}
+rand = "0.9"
